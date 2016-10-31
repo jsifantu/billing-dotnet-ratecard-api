@@ -14,7 +14,7 @@ using System.Configuration; //BL
 
 namespace ARMAPI_Test
 {
-#error Please update the appSettings section in app.config, then remove this statement
+// #error Please update the appSettings section in app.config, then remove this statement
 
     class Program
     {
@@ -22,62 +22,85 @@ namespace ARMAPI_Test
         //The same caveat remains, that the current user of the app needs to be part of either the Owner, Reader or Contributor role for the requested AzureSubID.
         static void Main(string[] args)
         {
-            //Get the AAD User token to get authorized to make the call to the Usage API
-            string token = GetOAuthTokenFromAAD();
+            try 
+            {
+                //Get the AAD User token to get authorized to make the call to the Usage API
+                var token = GetOAuthTokenFromAAD();
 
-            /*Setup API call to RateCard API
-             Callouts:
-             * See the App.config file for all AppSettings key/value pairs
-             * You can get a list of offer numbers from this URL: http://azure.microsoft.com/en-us/support/legal/offer-details/
-             * You can configure an OfferID for this API by updating 'MS-AZR-{Offer Number}'
-             * The RateCard Service/API is currently in preview; please use "2015-06-01-preview" or "2016-08-31-preview" for api-version (see https://msdn.microsoft.com/en-us/library/azure/mt219005 for details)
-             * Please see the readme if you are having problems configuring or authenticating: https://github.com/Azure-Samples/billing-dotnet-ratecard-api
-             */
+                /*Setup API call to RateCard API
+                 Callouts:
+                 * See the App.config file for all AppSettings key/value pairs
+                 * You can get a list of offer numbers from this URL: http://azure.microsoft.com/en-us/support/legal/offer-details/
+                 * You can configure an OfferID for this API by updating 'MS-AZR-{Offer Number}'
+                 * The RateCard Service/API is currently in preview; please use "2015-06-01-preview" or "2016-08-31-preview" for api-version (see https://msdn.microsoft.com/en-us/library/azure/mt219005 for details)
+                 * Please see the readme if you are having problems configuring or authenticating: https://github.com/Azure-Samples/billing-dotnet-ratecard-api
+                 */
+                char[] separators = { ',', ';' };
+                var offers = ConfigurationManager.AppSettings["Offers"].Split(separators);
+                foreach (var offerName in offers) {
+                    ProcessOffer(token, offerName);
+                }
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(String.Format("{0} \n\n{1}", e.Message, e.InnerException != null ? e.InnerException.Message : ""));
+            }
+            Console.ReadLine();
+        }
 
+        private static void ProcessOffer(string token, string offerName)
+        {
+            var url = string.Format("providers/Microsoft.Commerce/RateCard?api-version=2016-08-31-preview&$filter=OfferDurableId eq '{0}' and Currency eq 'USD' and Locale eq 'en-US' and RegionInfo eq 'US'",
+                offerName);
             // Build up the HttpWebRequest
             string requestURL = String.Format("{0}/{1}/{2}/{3}",
                        ConfigurationManager.AppSettings["ARMBillingServiceURL"],
                        "subscriptions",
                        ConfigurationManager.AppSettings["SubscriptionID"],
-                       "providers/Microsoft.Commerce/RateCard?api-version=2016-08-31-preview&$filter=OfferDurableId eq 'MS-AZR-0121p' and Currency eq 'USD' and Locale eq 'en-US' and RegionInfo eq 'US'");
+                       url);
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestURL);
 
             // Add the OAuth Authorization header, and Content Type header
             request.Headers.Add(HttpRequestHeader.Authorization, "Bearer " + token);
+            // request.Date = DateTime.UtcNow;
             request.ContentType = "application/json";
 
             // Call the RateCard API, dump the output to the console window
-            try
-            {
-                // Call the REST endpoint
-                Console.WriteLine("Calling RateCard service...");
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
-                Console.WriteLine(String.Format("RateCard service response status: {0}", response.StatusDescription));
-                Stream receiveStream = response.GetResponseStream();
 
-                // Pipes the stream to a higher level stream reader with the required encoding format. 
-                StreamReader readStream = new StreamReader(receiveStream, Encoding.UTF8);
+            // Call the REST endpoint
+            Console.WriteLine("Calling RateCard service...");
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            Console.WriteLine(String.Format("RateCard service response status: {0}", response.StatusDescription));
+            Stream receiveStream = response.GetResponseStream();
+
+            // Pipes the stream to a higher level stream reader with the required encoding format. 
+            using (var readStream = new StreamReader(receiveStream, Encoding.UTF8)) {
                 var rateCardResponse = readStream.ReadToEnd();
-                Console.WriteLine("RateCard stream received.  Press ENTER to continue with raw output.");
-                Console.ReadLine();
-                Console.WriteLine(rateCardResponse);
-                Console.WriteLine("Raw output complete.  Press ENTER to continue with JSON output.");
-                Console.ReadLine();
-
+#if SHOW_OUTPUT
+                    Console.WriteLine("RateCard stream received.  Press ENTER to continue with raw output.");
+                    Console.ReadLine();
+                    Console.WriteLine(rateCardResponse);
+                    Console.WriteLine("Raw output complete.  Press ENTER to continue with JSON output.");
+                    Console.ReadLine();
+#endif
+                var filePath = string.Format("{0}{1}{2}.json", Environment.CurrentDirectory,
+                    "..\\..\\..\\..\\", offerName);
+                using (var writer = new StreamWriter(filePath)) {
+                    writer.WriteLine(rateCardResponse);
+                }
                 // Convert the Stream to a strongly typed RateCardPayload object.  
                 // You can also walk through this object to manipulate the individuals member objects. 
                 RateCardPayload payload = JsonConvert.DeserializeObject<RateCardPayload>(rateCardResponse);
-                Console.WriteLine(rateCardResponse.ToString());
-                response.Close();
-                readStream.Close();
-                Console.WriteLine("JSON output complete.  Press ENTER to close.");
-                Console.ReadLine();
+                // Console.WriteLine(rateCardResponse.ToString());
+                filePath = string.Format("{0}{1}{2}.csv", Environment.CurrentDirectory,
+                    "..\\..\\..\\..\\", offerName);
+                Console.WriteLine("Writing response to CSV file " + filePath);
+                using (var writeStream = new StreamWriter(filePath)) {
+                    payload.ToCSV(writeStream);
+                }
             }
-            catch(Exception e)
-            {
-                Console.WriteLine(String.Format("{0} \n\n{1}", e.Message, e.InnerException != null ? e.InnerException.Message : ""));
-                Console.ReadLine();
-            }
+            response.Close();
+            receiveStream.Close();
         }
 
 
