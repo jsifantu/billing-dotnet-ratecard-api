@@ -1,9 +1,20 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console_RateCard", "ConsoleProj\Console_RateCard.csproj", "{54A35A7A-4B54-4429-A68B-93294C8FC678}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console_UsageAPI", "..\..\billing-dotnet-usage-api\ConsoleApp-Billing-Usage\ConsoleProj\Console_UsageAPI.csproj", "{11CE6338-8B61-41A8-A448-B67A9614B55E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{DCC294BF-65A1-49DD-973A-BAC815258F58}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\NuGet.Config = .nuget\NuGet.Config
+		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagementAPI", "..\..\search-dotnet-management-api\src\ManagementAPI.csproj", "{F481C6F0-E30E-45ED-9480-113ACB3D5592}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +26,14 @@ Global
 		{54A35A7A-4B54-4429-A68B-93294C8FC678}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{54A35A7A-4B54-4429-A68B-93294C8FC678}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{54A35A7A-4B54-4429-A68B-93294C8FC678}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11CE6338-8B61-41A8-A448-B67A9614B55E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11CE6338-8B61-41A8-A448-B67A9614B55E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11CE6338-8B61-41A8-A448-B67A9614B55E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11CE6338-8B61-41A8-A448-B67A9614B55E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F481C6F0-E30E-45ED-9480-113ACB3D5592}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F481C6F0-E30E-45ED-9480-113ACB3D5592}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F481C6F0-E30E-45ED-9480-113ACB3D5592}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F481C6F0-E30E-45ED-9480-113ACB3D5592}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -43,10 +43,11 @@ namespace ARMAPI_Test
                     tags.AppendFormat("{0}", entry);
                 }
             }
-
+            var meterNameUncoded = MeterName.Replace(",", "");
+            var unitUncoded = Unit.Replace(",", "");
             return string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}",
-                MeterId, MeterName, MeterCategory, MeterSubCategory,
-                Unit, rates.ToString(), EffectiveDate, tags,
+                MeterId, meterNameUncoded, MeterCategory, MeterSubCategory,
+                unitUncoded, rates.ToString(), EffectiveDate, tags,
                 MeterRegion, IncludedQuantity, MeterStatus);
         }
 
