@@ -25,8 +25,18 @@ namespace ARMAPI_Test
             try 
             {
                 //Get the AAD User token to get authorized to make the call to the Usage API
-                var token = GetOAuthTokenFromAAD();
-
+                string token;
+                var tokenFilePath = Environment.CurrentDirectory + "\\oathtoken.txt";
+                if (!File.Exists(tokenFilePath)) {
+                    token = GetOAuthTokenFromAAD();
+                    using (var writer = new StreamWriter(tokenFilePath)) {
+                        writer.WriteLine(token);
+                    }
+                } else {
+                    using (var reader = new StreamReader(tokenFilePath)) {
+                        token = reader.ReadToEnd();
+                    }
+                }
                 /*Setup API call to RateCard API
                  Callouts:
                  * See the App.config file for all AppSettings key/value pairs
@@ -45,6 +55,7 @@ namespace ARMAPI_Test
             {
                 Console.WriteLine(String.Format("{0} \n\n{1}", e.Message, e.InnerException != null ? e.InnerException.Message : ""));
             }
+            Console.WriteLine("Press the Return key to exit.");
             Console.ReadLine();
         }
 
@@ -83,8 +94,8 @@ namespace ARMAPI_Test
                     Console.WriteLine("Raw output complete.  Press ENTER to continue with JSON output.");
                     Console.ReadLine();
 #endif
-                var filePath = string.Format("{0}{1}{2}.json", Environment.CurrentDirectory,
-                    "..\\..\\..\\..\\", offerName);
+                var filePath = string.Format("{0}\\{1}.json", Environment.CurrentDirectory, offerName);
+                Console.WriteLine("Writing response to JSON file " + filePath);
                 using (var writer = new StreamWriter(filePath)) {
                     writer.WriteLine(rateCardResponse);
                 }
@@ -92,8 +103,7 @@ namespace ARMAPI_Test
                 // You can also walk through this object to manipulate the individuals member objects. 
                 RateCardPayload payload = JsonConvert.DeserializeObject<RateCardPayload>(rateCardResponse);
                 // Console.WriteLine(rateCardResponse.ToString());
-                filePath = string.Format("{0}{1}{2}.csv", Environment.CurrentDirectory,
-                    "..\\..\\..\\..\\", offerName);
+                filePath = string.Format("{0}\\{1}.csv", Environment.CurrentDirectory, offerName);
                 Console.WriteLine("Writing response to CSV file " + filePath);
                 using (var writeStream = new StreamWriter(filePath)) {
                     payload.ToCSV(writeStream);

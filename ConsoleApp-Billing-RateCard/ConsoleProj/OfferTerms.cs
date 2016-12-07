@@ -25,13 +25,15 @@ namespace ARMAPI_Test
             writer.WriteLine("Offer Terms");
             writer.WriteLine(GetCSVHeaders());
             var index = 0;
-            foreach (var entry in ExcludedMeterIds) {
-                if (index == 0) {
-                    writer.WriteLine(string.Format("{0},{1},{2},{3}", Name, Credit, entry, EffectiveDate));
-                } else {
-                    writer.WriteLine(string.Format(" , ,{0}, ", entry));
+            if (ExcludedMeterIds != null) {
+                foreach (var entry in ExcludedMeterIds) {
+                    if (index == 0) {
+                        writer.WriteLine(string.Format("{0},{1},{2},{3}", Name, Credit, entry, EffectiveDate));
+                    } else {
+                        writer.WriteLine(string.Format(" , ,{0}, ", entry));
+                    }
+                    index++;
                 }
-                index++;
             }
             writer.WriteLine();
         }
