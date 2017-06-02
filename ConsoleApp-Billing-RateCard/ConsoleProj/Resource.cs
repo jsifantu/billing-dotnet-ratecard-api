@@ -19,11 +19,37 @@ namespace ARMAPI_Test
         public string MeterRegion { get; set; }
         public double IncludedQuantity { get; set; }
         public string MeterStatus { get; set; }
+        private static List<string> CsvHeaders;
 
-        static public string GetCSVHeaders()
+        static Resource()
         {
-            return "MeterId, Meter Name, Meter Category, Meter Sub Category, "
-                + "Unit, Rates, Effective Date, Tags, Region, Quantity, Meter Status";
+            CsvHeaders = new List<string>() {
+                "MeterId",
+                "Meter Name",
+                "Meter Category",
+                "Meter Sub Category",
+                "Unit",
+                "Effective Date",
+                "Region",
+                "Included Quantity",
+                "Meter Status",
+                "Tags",
+                "Rates"
+            };
+        }
+
+        public static string GetCSVHeaders()
+        {
+            var headers = new StringBuilder();
+            int index = 0;
+            foreach(var header in CsvHeaders) {
+                if (index++ < CsvHeaders.Count) {
+                    headers.AppendFormat("{0},", header);
+                } else {
+                    headers.AppendFormat("{0}", header);
+                }
+            }
+            return headers.ToString();
         }
 
         public string ToCSV()
@@ -31,24 +57,30 @@ namespace ARMAPI_Test
             var rates = new StringBuilder();
             var tags = new StringBuilder();
             var index = 0;
-            foreach(KeyValuePair<string, double> entry in MeterRates) {
-                rates.AppendFormat("{0}:{1} ", entry.Key, entry.Value);
-            }
+            
             foreach(var entry in MeterTags) 
             {
-                index++;
-                if (index < MeterTags.Count) {
-                    tags.AppendFormat("{0} |", entry);
+                if (index++ < MeterTags.Count) {
+                    tags.AppendFormat("[{0}] ", entry);
                 } else {
-                    tags.AppendFormat("{0}", entry);
+                    tags.AppendFormat("[{0}]", entry);
                 }
             }
+            index = 0;
+            foreach (var entry in MeterRates) {
+                if (index++ < MeterRates.Count) {
+                    rates.AppendFormat("[{0}]{1} ", entry.Key, entry.Value);
+                } else {
+                    rates.AppendFormat("[{0}]{1}", entry.Key, entry.Value);
+                }
+            }
+
             var meterNameUncoded = MeterName.Replace(",", "");
             var unitUncoded = Unit.Replace(",", "");
             return string.Format("{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10}",
                 MeterId, meterNameUncoded, MeterCategory, MeterSubCategory,
-                unitUncoded, rates.ToString(), EffectiveDate, tags,
-                MeterRegion, IncludedQuantity, MeterStatus);
+                unitUncoded, EffectiveDate, MeterRegion, IncludedQuantity, MeterStatus,
+                tags.ToString(), rates.ToString());
         }
 
     }

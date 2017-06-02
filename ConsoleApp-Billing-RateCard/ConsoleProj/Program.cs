@@ -27,14 +27,14 @@ namespace ARMAPI_Test
                 //Get the AAD User token to get authorized to make the call to the Usage API
                 string token;
                 var tokenFilePath = Environment.CurrentDirectory + "\\oathtoken.txt";
-                if (!File.Exists(tokenFilePath)) {
+                if (File.Exists(tokenFilePath) && !IsOlderThanOneHour(File.GetCreationTime(tokenFilePath)))  {
+                    using (var reader = new StreamReader(tokenFilePath)) {
+                        token = reader.ReadToEnd();
+                    }
+                } else {                    
                     token = GetOAuthTokenFromAAD();
                     using (var writer = new StreamWriter(tokenFilePath)) {
                         writer.WriteLine(token);
-                    }
-                } else {
-                    using (var reader = new StreamReader(tokenFilePath)) {
-                        token = reader.ReadToEnd();
                     }
                 }
                 /*Setup API call to RateCard API
@@ -57,6 +57,13 @@ namespace ARMAPI_Test
             }
             Console.WriteLine("Press the Return key to exit.");
             Console.ReadLine();
+        }
+
+        private static bool IsOlderThanOneHour(DateTime fileTime)
+        {
+            var span1 = DateTime.Now - fileTime;
+            var span2 = TimeSpan.FromHours(1);
+            return span1 > span2;
         }
 
         private static void ProcessOffer(string token, string offerName)
