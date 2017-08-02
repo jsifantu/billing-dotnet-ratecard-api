@@ -4,7 +4,8 @@ $accountName = "jdsazuregroupdiag532"
 $accountKey = "IenvG/Ja+bRmjKxPkeIQyfs/9/u8BNPzUp29mSHvPsvFZZ9ypfVDSb+SUl03iub5MhdYRUW4UMKH/mk8wLHNdg=="
 # $ctx = New-AzureStorageContext -StorageAccountName $accountName -StorageAccountKey $accountKey
 
-$accounts = Get-AzureAccount
+$accounts = Add-AzureAccount
+#$accounts = Get-AzureAccount
 foreach ($account in $accounts) {
     Write-Host -ForegroundColor Yellow 'Account ID: ' $account.Id
     Write-Host -ForegroundColor White '  Subscription'
@@ -18,3 +19,6 @@ foreach ($account in $accounts) {
 		Write-Host -ForegroundColor Cyan '    ID: ' $tenantId
 	}
 }
+
+Remove-AzureAccount
+

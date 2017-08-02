@@ -27,15 +27,17 @@ namespace ARMAPI_Test
                 //Get the AAD User token to get authorized to make the call to the Usage API
                 string token;
                 var tokenFilePath = Environment.CurrentDirectory + "\\oathtoken.txt";
-                if (File.Exists(tokenFilePath) && !IsOlderThanOneHour(File.GetCreationTime(tokenFilePath)))  {
-                    using (var reader = new StreamReader(tokenFilePath)) {
-                        token = reader.ReadToEnd();
+                if (File.Exists(tokenFilePath)) {
+                    if (!IsOlderThanOneHour(File.GetCreationTime(tokenFilePath))) {
+                        using (var reader = new StreamReader(tokenFilePath)) {
+                            token = reader.ReadToEnd();
+                        }
+                    } else {
+                        DeleteTokenFile(tokenFilePath);
+                        token = GenerateTokenFile(tokenFilePath);                        
                     }
-                } else {                    
-                    token = GetOAuthTokenFromAAD();
-                    using (var writer = new StreamWriter(tokenFilePath)) {
-                        writer.WriteLine(token);
-                    }
+                } else {
+                    token = GenerateTokenFile(tokenFilePath);
                 }
                 /*Setup API call to RateCard API
                  Callouts:
@@ -48,15 +50,33 @@ namespace ARMAPI_Test
                 char[] separators = { ',', ';' };
                 var offers = ConfigurationManager.AppSettings["Offers"].Split(separators);
                 foreach (var offerName in offers) {
-                    ProcessOffer(token, offerName);
+                    try {
+                        ProcessOffer(token, offerName);
+                    } catch (WebException we) {
+                        Console.WriteLine(String.Format("{0} \n\n{1}",
+                            we.Message, we.InnerException != null ? we.InnerException.Message : ""));
+                    }
                 }
-            }
-            catch(Exception e)
-            {
+            } catch(Exception e)  {
                 Console.WriteLine(String.Format("{0} \n\n{1}", e.Message, e.InnerException != null ? e.InnerException.Message : ""));
             }
             Console.WriteLine("Press the Return key to exit.");
             Console.ReadLine();
+        }
+
+        private static void DeleteTokenFile(string tokenFilePath)
+        {
+            File.Delete(tokenFilePath);
+        }
+
+        private static string GenerateTokenFile(string tokenFilePath)
+        {
+            string token = GetOAuthTokenFromAAD();
+            using (var writer = new StreamWriter(tokenFilePath)) {
+                writer.WriteLine(token);
+            }
+
+            return token;
         }
 
         private static bool IsOlderThanOneHour(DateTime fileTime)
