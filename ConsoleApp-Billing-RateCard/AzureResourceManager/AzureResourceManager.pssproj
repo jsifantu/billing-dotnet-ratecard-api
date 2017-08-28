@@ -28,7 +28,10 @@
   </PropertyGroup>
   <ItemGroup />
   <ItemGroup>
+    <Compile Include="AzureProviders.md" />
     <Compile Include="AzureResourceManager.ps1" />
+    <Compile Include="download_billingdata.ps1" />
+    <Compile Include="GetServices.ps1" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Target Name="Build" />
