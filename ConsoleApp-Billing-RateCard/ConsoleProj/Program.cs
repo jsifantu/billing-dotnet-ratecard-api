@@ -14,7 +14,7 @@ using System.Configuration; //BL
 
 namespace ARMAPI_Test
 {
-// #error Please update the appSettings section in app.config, then remove this statement
+    // #error Please update the appSettings section in app.config, then remove this statement
 
     class Program
     {
@@ -22,8 +22,7 @@ namespace ARMAPI_Test
         //The same caveat remains, that the current user of the app needs to be part of either the Owner, Reader or Contributor role for the requested AzureSubID.
         static void Main(string[] args)
         {
-            try 
-            {
+            try {
                 //Get the AAD User token to get authorized to make the call to the Usage API
                 string token;
                 var tokenFilePath = Environment.CurrentDirectory + "\\oathtoken.txt";
@@ -34,13 +33,13 @@ namespace ARMAPI_Test
                         }
                     } else {
                         DeleteTokenFile(tokenFilePath);
-                        token = GenerateTokenFile(tokenFilePath);                        
+                        token = GenerateTokenFile(tokenFilePath);
                     }
                 } else {
                     token = GenerateTokenFile(tokenFilePath);
                 }
                 /*Setup API call to RateCard API
-                 Callouts:
+                 * Callouts:
                  * See the App.config file for all AppSettings key/value pairs
                  * You can get a list of offer numbers from this URL: http://azure.microsoft.com/en-us/support/legal/offer-details/
                  * You can configure an OfferID for this API by updating 'MS-AZR-{Offer Number}'
@@ -57,7 +56,7 @@ namespace ARMAPI_Test
                             we.Message, we.InnerException != null ? we.InnerException.Message : ""));
                     }
                 }
-            } catch(Exception e)  {
+            } catch (Exception e) {
                 Console.WriteLine(String.Format("{0} \n\n{1}", e.Message, e.InnerException != null ? e.InnerException.Message : ""));
             }
             Console.WriteLine("Press the Return key to exit.");
@@ -71,12 +70,13 @@ namespace ARMAPI_Test
 
         private static string GenerateTokenFile(string tokenFilePath)
         {
-            string token = GetOAuthTokenFromAAD();
+            var task = GetOAuthTokenFromAAD();
+            task.Wait();
             using (var writer = new StreamWriter(tokenFilePath)) {
-                writer.WriteLine(token);
+                writer.WriteLine(task.Result);
             }
 
-            return token;
+            return task.Result;
         }
 
         private static bool IsOlderThanOneHour(DateTime fileTime)
@@ -88,8 +88,11 @@ namespace ARMAPI_Test
 
         private static void ProcessOffer(string token, string offerName)
         {
-            var url = string.Format("providers/Microsoft.Commerce/RateCard?api-version=2016-08-31-preview&$filter=OfferDurableId eq '{0}' and Currency eq 'USD' and Locale eq 'en-US' and RegionInfo eq 'US'",
-                offerName);
+            var apiVersion = ConfigurationManager.AppSettings["ApiVersion"];
+            var currency = ConfigurationManager.AppSettings["Currency"];
+            var regionInfo = ConfigurationManager.AppSettings["RegionInfo"];
+            var url = string.Format("providers/Microsoft.Commerce/RateCard?api-version={0}&$filter=OfferDurableId eq '{1}' and Currency eq '{2}' and Locale eq 'en-US' and RegionInfo eq '{3}'",
+                apiVersion, offerName, currency, regionInfo);
             // Build up the HttpWebRequest
             string requestURL = String.Format("{0}/{1}/{2}/{3}",
                        ConfigurationManager.AppSettings["ARMBillingServiceURL"],
@@ -141,20 +144,19 @@ namespace ARMAPI_Test
         }
 
 
-        public static string GetOAuthTokenFromAAD()
+        public static async Task<string> GetOAuthTokenFromAAD()
         {
-            var authenticationContext = new AuthenticationContext(  String.Format("{0}/{1}",
+            var authenticationContext = new AuthenticationContext(String.Format("{0}/{1}",
                                                                     ConfigurationManager.AppSettings["ADALServiceURL"],
                                                                     ConfigurationManager.AppSettings["TenantDomain"]));
 
             //Ask the logged in user to authenticate, so that this client app can get a token on his behalf
-            var result = authenticationContext.AcquireToken(String.Format("{0}/",ConfigurationManager.AppSettings["ARMBillingServiceURL"]),
+            var result = await authenticationContext.AcquireTokenAsync(String.Format("{0}/", ConfigurationManager.AppSettings["ARMBillingServiceURL"]),
                                                             ConfigurationManager.AppSettings["ClientID"],
                                                             new Uri(ConfigurationManager.AppSettings["ADALRedirectURL"]),
-                                                            PromptBehavior.Always);
+                                                            new PlatformParameters(PromptBehavior.Always));
 
-            if (result == null)
-            {
+            if (result == null) {
                 throw new InvalidOperationException("Failed to obtain the JWT token");
             }
 
